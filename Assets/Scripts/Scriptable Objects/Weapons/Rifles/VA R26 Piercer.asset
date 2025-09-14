@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 119975459df03ed4d82675f5478d74e1, type: 3}
+  m_Name: VA R26 Piercer
+  m_EditorClassIdentifier: 
+  weaponName: VA R26
+  WeaponTitle: Piercer
+  weaponType: Rifle
+  weaponDamage: 20
+  bulletSpeed: 15
+  spreadAngle: 1.5
+  fireType: 0
+  weaponRateOfFire: 1
+  weaponRange: 30
+  weaponMagazineCapacity: 10
+  weaponKick: 0
+  manaReloadCost: 50
+  weaponSprite: {fileID: 1351056298012783133, guid: 7d515c56d5c0e8240a9e7af6003b2a9f, type: 3}
+  currentMagCapacity: 10
+  shotClip: {fileID: 8300000, guid: 191b1bc4b5fe4f54db78e89eb1f8a152, type: 3}
+  reloadSound: {fileID: 8300000, guid: 80df94bff3b07d548af93a1ff2b9c5e2, type: 3}
+  reloadSpeed: 2
