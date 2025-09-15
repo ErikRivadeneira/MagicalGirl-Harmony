@@ -39,6 +39,8 @@ public class PlayerInventory : MonoBehaviour
         inputManager.OnPreviousWeapon -= EquipPreviousWeapon;
         Pickup.OnMedkitPickup -= AddMedkit;
         Pickup.OnOrbPickup -= AddOrb;
+        inputManager.OnHealItem -= UseMedkit;
+        inputManager.OnManaItem -= UseOrb;
         /*inputManager.OnPreviousItem -= EquipPreviousItem;
         inputManager.OnNextItem -= EquipNextItem;*/
     }

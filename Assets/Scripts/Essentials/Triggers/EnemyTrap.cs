@@ -48,10 +48,8 @@ public class EnemyTrap : MonoBehaviour
         switch (allowedDirection)
         {
             case Direction.LeftToRight:
-                Debug.Log(playerPos + " " + triggerPos);
                 if (playerPos.x > triggerPos.x)
-                {
-
+                { 
                     this.gameObject.SetActive(false);
                     ActivateTrap();
                 }

@@ -15,17 +15,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerMana PlayerMana;
     [SerializeField] private AudioSource footSource;
 
-    bool isInUI = false;
+    [SerializeField] bool isInUI = false;
 
     #region ENABLE-DISABLE Input
     private void OnEnable()
     {
-        MissionClearUI.OnMissionClear += SetOnGameOverOrClear;
+        GameOverUI.OnGameOver += DisablePlayerActions;
+        MissionClearUI.OnMissionClear += DisablePlayerActions;
         IntroSequence.OnIntroFinished += SetOnStarted;
     }
     private void OnDisable()
     {
-        MissionClearUI.OnMissionClear -= SetOnGameOverOrClear;
+        GameOverUI.OnGameOver -= DisablePlayerActions;
+        MissionClearUI.OnMissionClear -= DisablePlayerActions;
         IntroSequence.OnIntroFinished -= SetOnStarted;
     }
     #endregion
@@ -54,7 +56,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void SetOnGameOverOrClear()
+    private void DisablePlayerActions()
     {
         isInUI = true;
         this.gameObject.GetComponent<Collider2D>().enabled = false;

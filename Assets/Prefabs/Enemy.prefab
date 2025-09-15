@@ -99,7 +99,7 @@ GameObject:
   - component: {fileID: 1566606834073094729}
   m_Layer: 0
   m_Name: Enemy
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -167,10 +167,11 @@ MonoBehaviour:
   bulletSprite: {fileID: 361296934, guid: 7623932bd491ecc49865590dda7aae4b, type: 3}
   source: {fileID: 0}
   shootClip: {fileID: 8300000, guid: 2d91baf40db3e0a4e9dc478a55f12b39, type: 3}
-  speed: 2
+  speed: 2.5
+  speedIncrementForChase: 3
   visionRange: 5
   visionAngle: 45
-  attackRange: 2
+  attackRange: 3.5
   playerSpotted: 0
   playerStealth: {fileID: 0}
   searchDuration: 3

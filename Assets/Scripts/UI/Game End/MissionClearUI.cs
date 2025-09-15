@@ -70,11 +70,13 @@ public class MissionClearUI : MonoBehaviour
         int seconds = Mathf.FloorToInt(timeInSeconds % 60);
         int psScoreValue = StatTracker.Instance.GetGhostModifier();
         int nkScoreValue = StatTracker.Instance.GetMercyModifier();
+        int alertsValue = StatTracker.Instance.GetAlerts();
+        int takenHitsValue = StatTracker.Instance.GetHitsTaken();
         missionTimeValue.text = string.Format("{0:00}:{1:00}",minutes,seconds);
         missionTimeScore.text = StatTracker.Instance.GetTimeScore().ToString();
-        enemyAlertsValue.text = StatTracker.Instance.GetAlerts().ToString();
+        enemyAlertsValue.text = alertsValue == 0 ? "NO ALERTS" : alertsValue.ToString();
         enemyAlertsScore.text = StatTracker.Instance.GetEnemyAlertsScore().ToString();
-        hitsTakenValue.text = StatTracker.Instance.GetHitsTaken().ToString();
+        hitsTakenValue.text = takenHitsValue == 0 ? "NONE" : takenHitsValue.ToString();
         hitsTakenScore.text = StatTracker.Instance.GetHitsTakenScore().ToString();
         accuracyValue.text = StatTracker.Instance.GetAccuracyPercentage().ToString();
         accuracyScore.text = StatTracker.Instance.GetAccuracyScore().ToString();

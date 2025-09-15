@@ -43,6 +43,7 @@ public class PlayerWeapon : MonoBehaviour
                 ApplyMuzzleEffect(); 
                 equippedWeapon.ReduceCurrentMag();
                 OnShotOrReload?.Invoke(equippedWeapon.GetCurrentMag());
+                OnShoot?.Invoke();
             }
             else if(equippedWeapon.MagIsEmpty())
             {
@@ -87,6 +88,10 @@ public class PlayerWeapon : MonoBehaviour
             playerMana.UseMana(reloadValue);
             Invoke(nameof(IsNotReloading), reloadTime);
             OnStartReload?.Invoke(reloadTime);
+        }
+        else if(playerMana.GetCurrentMana() < reloadValue)
+        {
+            OnAmmoFull?.Invoke("NO MANA");
         }
         else
         {

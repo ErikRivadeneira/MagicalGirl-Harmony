@@ -39,7 +39,7 @@ public class GameOverUI : MonoBehaviour
         float alpha = 0f;
         while (alpha < 1.0f)
         {
-            alpha += Time.deltaTime * fadeRate;
+            alpha += Time.unscaledDeltaTime * fadeRate;
             canvasGroup.alpha = alpha;
             yield return null;
         }

@@ -20,6 +20,7 @@ public class EnemyAI : MonoBehaviour
     [Header("Movement")]
     public float speed = 2f;
     private int currentPatrolIndex = 0;
+    [SerializeField] private float speedIncrementForChase = 3f;
 
     [Header("Detection")]
     public float visionRange = 6f;
@@ -169,7 +170,16 @@ public class EnemyAI : MonoBehaviour
     #region HELPERS
     private void MoveTowards(Vector2 target)
     {
-        transform.position = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
+        if(currentState == EnemyState.Chase || currentState == EnemyState.Search)
+        {
+            float chaseSpeed = speed + speedIncrementForChase;
+            transform.position = Vector2.MoveTowards(transform.position, target, chaseSpeed * Time.deltaTime);
+        }
+        else
+        {
+            transform.position = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
+        }
+        
     }
 
     private void LookForPlayer()

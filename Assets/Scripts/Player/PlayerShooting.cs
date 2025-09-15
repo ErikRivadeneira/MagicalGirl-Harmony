@@ -8,6 +8,8 @@ public class PlayerShooting : MonoBehaviour
     private bool isShootKeyPressed;
     private Rigidbody2D rb;
 
+
+
     #region ENABLE-DISABLE Input
     private void OnEnable()
     {

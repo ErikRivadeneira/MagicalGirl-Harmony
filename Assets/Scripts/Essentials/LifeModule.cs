@@ -116,6 +116,7 @@ public class LifeModule : MonoBehaviour
 
     public void Die()
     {
+        StopAllCoroutines();
         if (this.tag.Equals("Player"))
         {
             OnPlayerDead?.Invoke();

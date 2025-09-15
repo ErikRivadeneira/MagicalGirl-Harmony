@@ -7,7 +7,7 @@ public class StatTracker : MonoBehaviour
     [SerializeField] private float targetTime;
     [SerializeField] private float maxTime;
     [SerializeField] private int timeBonus = 5000;
-
+    [SerializeField] private int noShotBonus = 1000;
     public static StatTracker Instance { get; private set; }
 
     private void Awake()
@@ -91,33 +91,66 @@ public class StatTracker : MonoBehaviour
 
     public string GetAccuracyPercentage()
     {
-        double percentage = (hits / shots) * 100;
-        return $"{percentage}% ({hits}/{shots})";
+        if(shots > 0)
+        {
+            double percentage = Math.Round(((double)hits / shots) * 100, 2);
+            return $"{percentage}% ({hits}/{shots})";
+        }
+        else
+        {
+            return "NO SHOTS";
+        }
     }
 
     public int GetAccuracyScore()
     {
-        return (hitsTaken / shots) * 1000;
+        if (shots != 0)
+        {
+            int minimumScoreMod = Mathf.FloorToInt(noShotBonus * 0.1f);
+            int scoreModMinusMinimum = noShotBonus - minimumScoreMod;
+            float score = ((hits / (float)shots) * scoreModMinusMinimum) + minimumScoreMod;
+            return Mathf.FloorToInt(score);
+        }
+        else
+        {
+            return noShotBonus;
+        }
     }
     
     public int GetHitsTakenScore()
     {
-        return -hitsTaken * 100;
+        if (hitsTaken > 0)
+        {
+            return -hitsTaken * 100;
+        }
+        else
+        {
+            return 500;
+        }
     }
 
     public int GetEnemyAlertsScore()
     {
-        return -timesDiscovered * 100;
+        if(timesDiscovered > 0)
+        {
+            return -timesDiscovered * 100;
+        }
+        else
+        {
+            return 500;
+        }
+        
     }
 
     public int GetGhostModifier()
     {
-        return timesDiscovered > 0 ? 5000 : 0;
+        int gScore = timesDiscovered == 0 ? 5000 : 0;
+        return gScore;
     }
 
     public int GetMercyModifier()
     {
-        return kills > 0 ? 2500 : 0;
+        return kills == 0 ? 2500 : 0;
     }
 
     public float GetPlaytime()
@@ -174,5 +207,15 @@ public class StatTracker : MonoBehaviour
     public int GetHitsTaken()
     {
         return hitsTaken;
+    }
+
+    public void ResetVariables()
+    {
+        timesDiscovered = 0;
+        hitsTaken = 0;
+        hits = 0;
+        shots = 0;
+        playTime = 0;
+        kills = 0;
     }
 }
