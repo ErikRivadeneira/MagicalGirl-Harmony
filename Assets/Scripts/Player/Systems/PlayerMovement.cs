@@ -15,10 +15,15 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float runSpeed = 10f;
     [SerializeField] private float crouchedSpeed = 2.5f;
 
+    [Header("Noise Values")]
+    [SerializeField] private float walkNoise = 0.6f;
+    [SerializeField] private float runNoise = 1f;
+    [SerializeField] private float crouchNoise = 0.2f;
+
     // Movement
     private Vector2 inputMovementVector;
     private float movementSpeed = 5;
-    private int pixelsPerUnit = 32;
+    private int pixelsPerUnit = 64;
     private Vector2 lastInputDirection;
     private Vector2 lastRbPosition;
     private bool isSprinting = false;
@@ -26,7 +31,7 @@ public class PlayerMovement : MonoBehaviour
     // Aim Script ref
     private PlayerAim playerAimScript;
 
-    // Crouching for stealth, not implemented yet
+    // currently treated as walking instead of crouching
     private bool isCrouched = false;
 
     #region ENABLE-DISABLE Input
@@ -97,8 +102,14 @@ public class PlayerMovement : MonoBehaviour
             targetPos.y = Mathf.Round(targetPos.y * pixelsPerUnit) / pixelsPerUnit;
 
             rb.MovePosition(targetPos);
-
             lastRbPosition = rb.position;
+
+            float noiseVolume = 0f;
+            if (isCrouched) noiseVolume = crouchNoise;
+            else if (isSprinting) noiseVolume = runNoise;
+            else noiseVolume = walkNoise;
+
+            NoiseSystem.MakeNoise(transform.position, noiseVolume);
         }
     }
 

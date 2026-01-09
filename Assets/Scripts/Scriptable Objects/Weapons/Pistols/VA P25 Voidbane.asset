@@ -30,3 +30,4 @@ MonoBehaviour:
   shotClip: {fileID: 0}
   reloadSound: {fileID: 0}
   reloadSpeed: 3
+  gunVolume: 3

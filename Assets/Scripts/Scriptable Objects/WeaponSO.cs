@@ -21,6 +21,7 @@ public class WeaponSO : ScriptableObject
     [SerializeField] private AudioClip shotClip;
     [SerializeField] private AudioClip reloadSound;
     [SerializeField] private float reloadSpeed;
+    [SerializeField] private float gunVolume;
 
     public string GetWeaponName()
     {
@@ -130,5 +131,10 @@ public class WeaponSO : ScriptableObject
     public float GetReloadSpeed()
     {
         return reloadSpeed;
+    }
+
+    public float GetGunVolume()
+    {
+        return gunVolume;
     }
 }

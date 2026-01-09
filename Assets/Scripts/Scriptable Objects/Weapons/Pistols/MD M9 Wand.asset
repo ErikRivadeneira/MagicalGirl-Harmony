@@ -26,7 +26,8 @@ MonoBehaviour:
   manaReloadCost: 20
   weaponSprite: {fileID: 511783683051918592, guid: 4374ffd3ab3d76045b16db40dd0ebdab, type: 3}
   bulletSprite: {fileID: 567599490, guid: 7623932bd491ecc49865590dda7aae4b, type: 3}
-  currentMagCapacity: 0
+  currentMagCapacity: 14
   shotClip: {fileID: 8300000, guid: f7290df2da7ffe24ca8061f64f3fb89c, type: 3}
   reloadSound: {fileID: 8300000, guid: 0fb558d6901787340993624942d83e29, type: 3}
   reloadSpeed: 1.8
+  gunVolume: 0.1
