@@ -1,28 +1,38 @@
 # Magical Girl: HARMONY
 
-Solo stealth-action prototype focused on enemy AI behavior, infiltration gameplay and player feedback systems.
+**Solo stealth-action prototype focused on enemy AI behavior, infiltration gameplay, and player feedback systems.**
 
-This project was built to demonstrate:
-- State-driven enemy AI architecture
-- Visual and auditory detection systems
-- Stealth-to-combat transition design
-- Gameplay feedback loops and player awareness systems
+This project demonstrates core gameplay programming skills through the implementation of modular AI, stealth mechanics, and responsive combat systems.
 
-Developed in Unity using C#.
+---
 
 ## 🧠 Gameplay Systems Implemented
 
-- Enemy AI patrol, alert and combat states using finite state machines
-- Line-of-sight detection and awareness escalation
-- Stealth scoring and combat performance tracking
-- Weapon handling, reload logic and player feedback loops
-- Health, mana and item usage systems
-- Modular UI feedback architecture
+- Enemy AI patrol, search, chase, and attack states using a **finite state machine architecture**  
+- Line-of-sight and auditory detection with awareness escalation  
+- Stealth-to-combat transition logic with scoring and feedback  
+- Weapon handling, reload logic, and combat cooldown systems  
+- Health, mana, and consumable item management  
+- Modular UI feedback architecture for player awareness
 
 ---
 
 ## 🏗 Architecture Notes
 
-- State-driven AI design for extensibility
-- Separation between player input, combat resolution and UI feedback
-- ScriptableObject-driven configuration for tuning gameplay values
+- **State-driven AI design** for extensibility and behavior isolation  
+- Clear separation between:
+  - Player input  
+  - Combat resolution  
+  - UI feedback  
+- **ScriptableObject-driven configuration** for tuning gameplay parameters
+
+---
+
+## 🛠 Tech Stack
+
+- Unity (C#)  
+- NavMeshAgent (2.5D navigation)  
+- Object pooling for projectiles  
+- Custom Gizmo debugging tools
+
+
