@@ -1,39 +1,44 @@
 using System;
+using TMPro;
 using UnityEngine;
-using UnityEngine.Experimental.GlobalIllumination;
-using UnityEngine.Rendering.Universal;
+using UnityEngine.AI;
+using UnityEngine.Rendering;
+using UnityEngine.UIElements;
 
 public class EnemyAI : MonoBehaviour
 {
-    public enum EnemyState { Patrol, Chase, Attack, Search }
-    private EnemyState currentState;
+    private IEnemyState currentState;
 
     [Header("References")]
-    public Transform[] patrolPoints;
-    public Transform player;
-    public LayerMask visionMask;
-    [SerializeField] private Light2D light;
+    public Transform[] PatrolPoints;
+    public Transform Player;
+    public PlayerStealth playerStealth;
+    public NavMeshAgent Agent;
     [SerializeField] private Sprite bulletSprite;
     [SerializeField] private AudioSource source;
     [SerializeField] private AudioClip shootClip;
 
     [Header("Movement")]
     public float speed = 2f;
-    private int currentPatrolIndex = 0;
-    [SerializeField] private float speedIncrementForChase = 3f;
+    public float speedIncrementForChase = 3f;
 
     [Header("Detection")]
+    // Vision
     public float visionRange = 6f;
     public float visionAngle = 45f;
     public float attackRange = 2f;
-    public bool playerSpotted = false;
-    public PlayerStealth playerStealth;
-    
+    public Vector2 LastKnownPlayerPos;
+    public LayerMask visionMask;
+    // Hearing
+    public float hearingRadius = 10f;
+    private Vector2 lastHeardPosition;
+    // Indicators
+    [SerializeField] private TextMeshProUGUI alertnessText;
+    [SerializeField] private Canvas alertCanvas;
+    private EAlertness alertLevel = EAlertness.Idle;
 
     [Header("Search")]
     public float searchDuration = 3f;
-    private float searchTimer = 0f;
-    private Vector2 lastKnownPlayerPos;
 
     [Header("Combat")]
     public float attackCooldown = 1f;
@@ -46,184 +51,96 @@ public class EnemyAI : MonoBehaviour
 
     public static event Action OnPlayerDiscovered;
 
+    #region ENABLE-DISABLE Events
+    private void OnEnable()
+    {
+        NoiseSystem.OnNoiseHeard += HandleNoiseHeard;
+    }
+
+    private void OnDisable()
+    {
+        NoiseSystem.OnNoiseHeard -= HandleNoiseHeard;
+    }
+    #endregion
+
+    private void Awake()
+    {
+        if (!Agent)
+        {
+            Agent = GetComponent<NavMeshAgent>();
+            Agent.updateRotation = false;
+            Agent.updateUpAxis = false;
+            Agent.baseOffset = 0f;
+        }
+    }
+
     private void Start()
     {
-        currentState = EnemyState.Patrol;
+        ChangeState(new PatrolState());
     }
 
     private void Update()
     {
-        switch (currentState)
-        {
-            case EnemyState.Patrol:
-                Patrol();
-                LookForPlayer();
-                break;
-
-            case EnemyState.Chase:
-                Chase();
-                break;
-
-            case EnemyState.Attack:
-                Attack();
-                break;
-
-            case EnemyState.Search:
-                Search();
-                break;
-        }
-
-        playerSpotted = CanSeePlayer();
+        currentState?.UpdateState(this);
     }
-
-    #region PATROL
-    private void Patrol()
+    private void LateUpdate()
     {
-        if (patrolPoints.Length == 0) return;
-
-        Transform targetPoint = patrolPoints[currentPatrolIndex];
-        MoveTowards(targetPoint.position);
-        FaceTarget(targetPoint.position);
-
-        if (Vector2.Distance(transform.position, targetPoint.position) < 0.1f)
+        if (Agent != null && Agent.enabled)
         {
-            currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
-        }
-    }
-    #endregion
-
-    #region CHASE
-    private void Chase()
-    {
-        if (player == null) return;
-
-        MoveTowards(player.position);
-        FaceTarget(player.position);
-
-        float dist = Vector2.Distance(transform.position, player.position);
-
-        if (!CanSeePlayer())
-        {
-            lastKnownPlayerPos = player.position;
-            currentState = EnemyState.Search;
-            searchTimer = searchDuration;
-        }
-        else if (dist <= attackRange)
-            currentState = EnemyState.Attack;
-    }
-    #endregion
-
-    #region ATTACK
-    private void Attack()
-    {
-        if (player == null) return;
-
-        float dist = Vector2.Distance(transform.position, player.position);
-
-        if (dist > attackRange)
-        {
-            currentState = EnemyState.Chase;
-            return;
-        }
-
-        if (Time.time > (lastAttackTime + attackCooldown))
-        {
-            Shoot();
-            lastAttackTime = Time.time;
-        }
-    }
-    #endregion
-
-    #region SEARCH
-    private void Search()
-    {
-        float dist = Vector2.Distance(transform.position, lastKnownPlayerPos);
-
-        if (dist > 0.1f)
-        {
-            MoveTowards(lastKnownPlayerPos);
-            FaceTarget(lastKnownPlayerPos);
-        }
-        else
-        {
-            float searchAngleOffset = Mathf.Sin(Time.time * 2f) * 45f;
-            Vector2 dirToTarget = (lastKnownPlayerPos - (Vector2)transform.position).normalized;
-            Vector2 searchDir = Quaternion.Euler(0, 0, searchAngleOffset) * dirToTarget;
-            FaceTarget((Vector2)transform.position + searchDir);
-        }
-
-        searchTimer -= Time.deltaTime;
-
-        if (CanSeePlayer())
-        {
-            currentState = EnemyState.Chase;
-            return;
-        }
-
-        if (searchTimer <= 0f)
-        {
-            currentState = EnemyState.Patrol;
-        }
-    }
-    #endregion
-
-    #region HELPERS
-    private void MoveTowards(Vector2 target)
-    {
-        if(currentState == EnemyState.Chase || currentState == EnemyState.Search)
-        {
-            float chaseSpeed = speed + speedIncrementForChase;
-            transform.position = Vector2.MoveTowards(transform.position, target, chaseSpeed * Time.deltaTime);
-        }
-        else
-        {
-            transform.position = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
-        }
-        
-    }
-
-    private void LookForPlayer()
-    {
-        if (CanSeePlayer())
-        {
-            OnPlayerDiscovered?.Invoke();
-            currentState = EnemyState.Chase;
+            Vector3 pos = Agent.transform.position;
+            pos.z = 0f;
+            Agent.transform.position = pos;
+            // Reset unwanted rotations (keep only Z rotation for 2D facing)
+            Agent.transform.rotation = Quaternion.Euler(0f, 0f, Agent.transform.rotation.eulerAngles.z);
+            // keep alert indicator upwards
+            alertCanvas.transform.rotation = Quaternion.identity;
         }
     }
 
-    private bool CanSeePlayer()
+    public void ChangeState(IEnemyState newState)
     {
-        if (player == null) return false;
+        currentState?.Exit(this);
+        currentState = newState;
+        currentState?.Enter(this);
+        if (currentState is PatrolState)
+            SetAlertLevel(EAlertness.Idle);
+        else if (currentState is SearchState)
+            SetAlertLevel(EAlertness.Suspicious);
+        else if (currentState is ChaseState || currentState is AttackState)
+            SetAlertLevel(EAlertness.Alert);
+    }
 
-        Vector2 dirToPlayer = (player.position - transform.position).normalized;
-        float angle = Vector2.Angle(transform.right, dirToPlayer);
+    #region --- Helpers ---
+    public void HandleNoiseHeard(Vector2 position, float volume)
+    {
+        hearingRadius = visionRange * 1.5f;
+        float effectiveRange = hearingRadius * volume;
 
-        float effectiveRange = visionRange;
-        float effectiveAngle = visionAngle;
-
-        // Factor in player visibility
-        if (playerStealth != null)
+        float dist = Vector2.Distance(transform.position, position);
+        if (dist <= effectiveRange)
         {
-            effectiveRange *= playerStealth.visibility; 
-            light.pointLightOuterRadius = effectiveRange;
-            // Optional scale angle:
-            // effectiveAngle *= playerStealth.visibility;
-        }
+            lastHeardPosition = position;
 
-        if (Vector2.Distance(transform.position, player.position) <= effectiveRange &&
-            angle < effectiveAngle / 2f)
-        {
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, dirToPlayer, effectiveRange, visionMask);
-            if (hit.collider != null && hit.collider.transform == player)
+            // Only search if not already in combat
+            if (!(currentState is ChaseState) && !(currentState is AttackState))
             {
-                return true;
+                ChangeState(new SearchState(lastHeardPosition));
             }
         }
-
-        return false;
     }
 
-    private void FaceTarget(Vector2 target)
+    public void NotifyPlayerDiscovery()
+    {
+        OnPlayerDiscovered?.Invoke();
+    }
+
+    public void MoveTo(Vector2 target, float moveSpeed)
+    {
+        Agent.speed = moveSpeed;
+        Agent.SetDestination(target);
+    }
+
+    public void FaceTarget(Vector2 target)
     {
         Vector2 dir = (target - (Vector2)transform.position).normalized;
         if (dir.sqrMagnitude > 0.01f)
@@ -233,21 +150,55 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    private void Shoot()
+    public bool CanSeePlayer()
+    {
+        if (Player == null) return false;
+
+        Vector2 dirToPlayer = (Player.position - transform.position).normalized;
+        float angle = Vector2.Angle(transform.right, dirToPlayer);
+
+        float effectiveRange = visionRange;
+        if (playerStealth != null)
+            effectiveRange *= playerStealth.visibility;
+
+        if (Vector2.Distance(transform.position, Player.position) <= effectiveRange &&
+            angle < visionAngle / 2f)
+        {
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, dirToPlayer, effectiveRange, visionMask);
+            return hit.collider != null && hit.collider.transform == Player;
+        }
+
+        return false;
+    }
+
+    public bool CanAttack()
+    {
+        return Time.time > (lastAttackTime + attackCooldown);
+    }
+
+    public void RecordAttack()
+    {
+        lastAttackTime = Time.time;
+    }
+
+    public void Shoot()
     {
         GameObject bullet = BulletPool.instance.GetPooledBullet();
         if (bullet == null) return;
 
-        Vector2 dir = ((Vector2)player.position - (Vector2)transform.position).normalized;
+        Vector2 dir = ((Vector2)Player.position - (Vector2)transform.position).normalized;
         Vector2 directionWithSpread = ApplySpread(dir, bulletSpread);
 
         bullet.transform.position = shootPoint.position;
-        bullet.GetComponent<BulletControler>().SetBulletData(bulletSpeed, bulletReach, bulletDamage, directionWithSpread, bulletSprite);
+        bullet.GetComponent<BulletControler>().SetBulletData(
+            bulletSpeed, bulletReach, bulletDamage, directionWithSpread, bulletSprite
+        );
+
         bullet.SetActive(true);
         source.PlayOneShot(shootClip);
     }
 
-    Vector2 ApplySpread(Vector2 baseDirection, float spreadAngleDegrees)
+    private Vector2 ApplySpread(Vector2 baseDirection, float spreadAngleDegrees)
     {
         float offset = UnityEngine.Random.Range(-spreadAngleDegrees * 0.5f, spreadAngleDegrees * 0.5f);
         float radians = offset * Mathf.Deg2Rad;
@@ -259,52 +210,68 @@ public class EnemyAI : MonoBehaviour
             baseDirection.x * sin + baseDirection.y * cos
         ).normalized;
     }
-    #endregion
 
-    private void OnDrawGizmos()
+    void SetAlertLevel(EAlertness level)
     {
-        if (player == null) return;
-
-        if (patrolPoints != null && patrolPoints.Length > 0)
+        alertLevel = level;
+        switch(alertLevel)
         {
-            Gizmos.color = Color.green;
-            for (int i = 0; i < patrolPoints.Length; i++)
-            {
-                if (patrolPoints[i] == null) continue;
-                Gizmos.DrawSphere(patrolPoints[i].position, 0.2f);
-                Transform next = patrolPoints[(i + 1) % patrolPoints.Length];
-                if (next != null)
-                    Gizmos.DrawLine(patrolPoints[i].position, next.position);
-            }
+            case EAlertness.Idle:
+                alertnessText.text = "...";
+                alertnessText.color = Color.white;
+                break;
+            case EAlertness.Suspicious: 
+                alertnessText.text = "?";
+                alertnessText.color = Color.yellow;
+                break;
+            case EAlertness.Alert: 
+                alertnessText.text = "!";
+                alertnessText.color = Color.red;
+                break;
         }
+    }
+    #endregion
+    private void OnDrawGizmosSelected()
+    {
+        // --- Vision radius ---
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, visionRange);
 
+        // --- Hearing radius ---
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, hearingRadius);
+
+        // --- Attack radius ---
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
 
+        // --- Vision cone ---
+        Vector3 forward = transform.right; // agent facing direction
+        Quaternion leftRot = Quaternion.AngleAxis(-visionAngle / 2f, Vector3.forward);
+        Quaternion rightRot = Quaternion.AngleAxis(visionAngle / 2f, Vector3.forward);
+
+        Vector3 leftDir = leftRot * forward;
+        Vector3 rightDir = rightRot * forward;
+
         Gizmos.color = Color.yellow;
-        int segments = 30;
-        float halfAngle = visionAngle / 2f;
-        float effectiveRange = visionRange;
+        Gizmos.DrawLine(transform.position, transform.position + leftDir * visionRange);
+        Gizmos.DrawLine(transform.position, transform.position + rightDir * visionRange);
 
-        if (playerStealth != null)
-            effectiveRange *= playerStealth.visibility;
-
-        Vector3 lastPoint = transform.position;
-        for (int i = 0; i <= segments; i++)
-        {
-            float angle = -halfAngle + (visionAngle / segments) * i;
-            Vector2 dir = Quaternion.Euler(0, 0, angle) * transform.right;
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, dir, effectiveRange, visionMask);
-            Vector3 endPoint = hit.collider ? (Vector3)hit.point : (Vector3)(transform.position + (Vector3)dir * effectiveRange);
-            if (i > 0)
-                Gizmos.DrawLine(lastPoint, endPoint);
-            lastPoint = endPoint;
-        }
-
-        if (CanSeePlayer())
+        // --- Last Known Player Position ---
+        if (LastKnownPlayerPos != Vector2.zero)
         {
             Gizmos.color = Color.magenta;
-            Gizmos.DrawLine(transform.position, player.position);
+            Gizmos.DrawWireSphere(LastKnownPlayerPos, 0.2f);
+            Gizmos.DrawLine(transform.position, LastKnownPlayerPos);
+        }
+
+        // --- Last Heard Position ---
+        if (lastHeardPosition != Vector2.zero)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(lastHeardPosition, 0.2f);
+            Gizmos.DrawLine(transform.position, lastHeardPosition);
         }
     }
+
 }

@@ -38,6 +38,7 @@ public class PlayerWeapon : MonoBehaviour
             {
                 readyForNextShot = Time.time + 1/equippedWeapon.GetWeaponRateOfFire();
                 gunSource.PlayOneShot(equippedWeapon.GetShotClip());
+                NoiseSystem.MakeNoise(transform.position, equippedWeapon.GetGunVolume());
                 BulletInstatiationLogic(bullet);  
                 ApplyRecoil(rb);
                 ApplyMuzzleEffect(); 
